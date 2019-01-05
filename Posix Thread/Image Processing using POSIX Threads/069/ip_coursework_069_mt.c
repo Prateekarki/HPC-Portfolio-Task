@@ -22,7 +22,8 @@
       the pixel data type.
     
   To compile adapt the code below wo match your filenames:  
-    cc -o ip_coursework ip_coursework.c -lglut -lGL -lm 
+     gcc -o ip_coursework_069_mt ip_coursework_069_mt.c -lglut -lGL -lm -pthread
+    ./ip_coursework_069_mt
    
   Dr Kevan Buckley, University of Wolverhampton, 2018
 ******************************************************************************/
@@ -30,7 +31,7 @@
 #define height 72
 
   unsigned char image[], results[width * height];
-
+//dataset
   unsigned char image[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -411,19 +412,15 @@
   	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
   };
-
-
   typedef struct arguments_t {
   	int start;
   	int stride;
-
   } arguments_t;
 
   void *imgdetect(arguments_t *args){
   	detect_edges(image, results, args);
 
   }
-
   void detect_edges(unsigned char *in, unsigned char *out) {
   	int i;
   	int n_pixels = width * height;
@@ -455,16 +452,13 @@
   }
 }
 }
-
 void tidy_and_exit() {
 	exit(0);
 }
-
 void sigint_callback(int signal_number){
 	printf("\nInterrupt from keyboard\n");
 	tidy_and_exit();
 }
-
 static void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glRasterPos4i(-1, -1, 0, 1);
@@ -473,7 +467,6 @@ static void display() {
 	glDrawPixels(width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, results);
 	glFlush();
 }
-
 static void key_pressed(unsigned char key, int x, int y) {
 	switch(key){
     case 27: // escape
@@ -484,12 +477,11 @@ static void key_pressed(unsigned char key, int x, int y) {
     break;
 }
 }
-
+//time difference
 int time_difference(struct timespec *start, struct timespec *finish,
 	long long int *difference) {
 	long long int ds =  finish->tv_sec - start->tv_sec; 
 	long long int dn =  finish->tv_nsec - start->tv_nsec; 
-
 	if(dn < 0 ) {
 		ds--;
 		dn += 1000000000; 
@@ -497,44 +489,38 @@ int time_difference(struct timespec *start, struct timespec *finish,
 	*difference = ds * 1000000000 + dn;
 	return !(*difference > 0);
 }
-
-
 int main(int argc, char **argv) {
 
 	struct timespec start, finish;   
 	long long int time_elapsed;
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	signal(SIGINT, sigint_callback);
-
+		//function call
 	detect_edges(image, results);
-
+		//pthread variables
 	pthread_t thread_1, thread_2, thread_3, thread_4;
 
 	arguments_t thread_1_arguments;
 	thread_1_arguments.start = 0;
 	thread_1_arguments.stride = 4;
 
-
 	arguments_t thread_2_arguments;
 	thread_2_arguments.start = 1;
 	thread_2_arguments.stride = 4;
-
 
 	arguments_t thread_3_arguments;
 	thread_3_arguments.start = 2;
 	thread_3_arguments.stride = 4;
 
-
 	arguments_t thread_4_arguments;
 	thread_4_arguments.start = 3;
 	thread_4_arguments.stride = 4;
-
-
+		//pthread created function passed to thread
 	pthread_create(&thread_1, NULL, imgdetect, &thread_1_arguments);
 	pthread_create(&thread_2, NULL, imgdetect, &thread_2_arguments);
 	pthread_create(&thread_3, NULL, imgdetect, &thread_3_arguments);
 	pthread_create(&thread_4, NULL, imgdetect, &thread_4_arguments);
-
+		///thread joined
 	pthread_join(thread_1, NULL);
 	pthread_join(thread_2, NULL);
 	pthread_join(thread_3, NULL);

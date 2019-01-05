@@ -21,15 +21,13 @@
       the pixel data type.
     
   To compile adapt the code below wo match your filenames:  
-    cc -o ip_coursework ip_coursework.c -lglut -lGL -lm 
-   
+    gcc -o ip_coursework_069 ip_coursework_069.c -lglut -lGL -lm 
+    ./ip_coursework_069
   Dr Kevan Buckley, University of Wolverhampton, 2018
 ******************************************************************************/
 #define width 100 
 #define height 72
-
 unsigned char image[], results[width * height];
-
 void detect_edges(unsigned char *in, unsigned char *out) {
   int i;
   int n_pixels = width * height;
@@ -61,16 +59,13 @@ void detect_edges(unsigned char *in, unsigned char *out) {
     }
   }
 }
-
 void tidy_and_exit() {
   exit(0);
 }
-
 void sigint_callback(int signal_number){
   //printf("\nInterrupt from keyboard\n");
   tidy_and_exit();
 }
-
 static void display() {
   glClear(GL_COLOR_BUFFER_BIT);
   glRasterPos4i(-1, -1, 0, 1);
@@ -79,7 +74,6 @@ static void display() {
   glDrawPixels(width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, results);
   glFlush();
 }
-
 static void key_pressed(unsigned char key, int x, int y) {
   switch(key){
     case 27: // escape
@@ -90,12 +84,11 @@ static void key_pressed(unsigned char key, int x, int y) {
       break;
   }
 }
-
+//time difference code
 int time_difference(struct timespec *start, struct timespec *finish,
                     long long int *difference) {
   long long int ds =  finish->tv_sec - start->tv_sec; 
   long long int dn =  finish->tv_nsec - start->tv_nsec; 
-
   if(dn < 0 ) {
     ds--;
     dn += 1000000000; 
@@ -104,7 +97,7 @@ int time_difference(struct timespec *start, struct timespec *finish,
   return !(*difference > 0);
 }
 
-
+//main method
 int main(int argc, char **argv) {
   signal(SIGINT, sigint_callback);
 
@@ -113,8 +106,6 @@ int main(int argc, char **argv) {
 
   clock_gettime(CLOCK_MONOTONIC, &start);
   signal(SIGINT, sigint_callback);
-  
-
   //printf("image dimensions %dx%d\n", width, height);
   detect_edges(image, results);
 
@@ -123,11 +114,9 @@ int main(int argc, char **argv) {
   printf("Time elapsed was %lldns or %0.9lfs\n", time_elapsed,
          (time_elapsed/1.0e9)); 
   
-
   glutInit(&argc, argv);
   glutInitWindowSize(width * 2,height);
   glutInitDisplayMode(GLUT_SINGLE | GLUT_LUMINANCE);
-      
   glutCreateWindow("6CS005 Image Progessing Courework");
   glutDisplayFunc(display);
   glutKeyboardFunc(key_pressed);
@@ -136,10 +125,8 @@ int main(int argc, char **argv) {
   glutMainLoop(); 
 
   tidy_and_exit();
-  
   return 0;
 }
-
 unsigned char image[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
