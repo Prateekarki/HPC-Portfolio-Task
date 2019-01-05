@@ -12,10 +12,10 @@
 * a gradient search for a minimum in mc-space.
 * 
 * To compile:
-*   mpicc -n 9 -o lr_coursework lr_coursework.c -lm
+*   mpicc -n 9 -o linearMPI MPI_linear_regression.c -lm
 * 
 * To run:
-*   ./lr_coursework
+*   mpirun -n 9 -quiet ./linearMPI
 * 
 * Dr Kevan Buckley, University of Wolverhampton, 2018
 *****************************************************************************/
@@ -34,22 +34,20 @@ double residual_error (double x, double y, double m, double c)
    double e = (m * x) + c - y;
    return e * e;
 }
-
+//error function 
 double rms_error (double m, double c)
 {
    int i;
    double mean;
    double error_sum = 0;
-
    for (i = 0; i < n_data; i++)
    {
       error_sum += residual_error (data[i].x, data[i].y, m, c);
    }
-
    mean = error_sum / n_data;
-
    return sqrt (mean);
 }
+//time function 
 int time_difference(struct timespec *start, struct timespec *finish, 
                     long long int *difference) {
                        long long int ds =  finish->tv_sec - start->tv_sec; 
@@ -62,14 +60,12 @@ int time_difference(struct timespec *start, struct timespec *finish,
                        *difference = ds * 1000000000 + dn;
                        return !(*difference > 0);
 }
+//main function 
 int main () {
-
-
    struct timespec start, finish;   
    long long int time_elapsed;
-   clock_gettime(CLOCK_MONOTONIC, &start);
-
-
+   clock_gettime(CLOCK_MONOTONIC, &start); //strting time 
+//variables
    int rank, size;
    int i;
    double bm = 1.3;
@@ -84,15 +80,12 @@ int main () {
    int minimum_found = 0;
    double pError = 0;
    double baseMC[2];
-
    double om[] = { 0, 1, 1, 1, 0, -1, -1, -1 };
    double oc[] = { 1, 1, 0, -1, -1, -1, 0, 1 };
-
-
+   //Initilizing MPI 
    MPI_Init (NULL, NULL);
-   MPI_Comm_size (MPI_COMM_WORLD, &size);
-   MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-
+   MPI_Comm_size (MPI_COMM_WORLD, &size);//determining size of group
+   MPI_Comm_rank (MPI_COMM_WORLD, &rank);//determingn rank of group
    be = rms_error (bm, bc);
 
    if (size != 9)
@@ -104,22 +97,19 @@ int main () {
          return 0;
       }
    }
-
    while (!minimum_found)
    {
-
       if (rank != 0)
       {
          i = rank - 1;
          dm[i] = bm + (om[i] * step);
          dc[i] = bc + (oc[i] * step);
          pError = rms_error (dm[i], dc[i]);
-
+         //sending count of element
          MPI_Send (&pError, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
          MPI_Send (&dm[i], 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
          MPI_Send (&dc[i], 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-
-
+         //receving count of element
          MPI_Recv (&bm, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
          MPI_Recv (&bc, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
          MPI_Recv (&minimum_found, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -128,6 +118,7 @@ int main () {
       {
          for (i = 1; i < size; i++)
          {
+         	//recving count of element
             MPI_Recv (&pError, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             MPI_Recv (&dm[i-1], 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             MPI_Recv (&dc[i-1], 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -135,7 +126,6 @@ int main () {
             {
                best_error = pError;
                best_error_i = i - 1;
-
             }
          }
          // printf ("best m,c is %lf,%lf with error %lf in direction %d\n",
@@ -150,7 +140,6 @@ int main () {
          {
             minimum_found = 1;
          }
-
          for (i = 1; i < size; i++)
          {
             MPI_Send (&bm, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
@@ -159,19 +148,19 @@ int main () {
          }
       }
    }
-
    if(rank==0) {
       printf ("minimum m,c is %lf,%lf with error %lf\n", bm, bc, be);
-      clock_gettime(CLOCK_MONOTONIC, &finish);
+      clock_gettime(CLOCK_MONOTONIC, &finish); //stopping time
       time_difference(&start, &finish, &time_elapsed);
+      //printing time elapsed
       printf("Time elapsed was %lldns or %0.9lfs\n", time_elapsed, 
          (time_elapsed/1.0e9));
    }
 
-   MPI_Finalize();
+   MPI_Finalize(); //closing MPI
    return 0;
 }
-
+//data set
 point_t data[] = {
 	{82.73,128.67},{79.53,133.54},{66.86,124.65},{69.21,135.74},
 	{82.20,122.07},{84.32,120.46},{71.12,93.14},{85.64,121.42},

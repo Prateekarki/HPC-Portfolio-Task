@@ -14,8 +14,8 @@
        is hardcoded into a function called is_a_match.   
 
   Compile and run with:
-    nvcc -o cuda_crack.cu cuda_crack
-    ./cuda_crack
+    nvcc -o passwordcrack_cuda passwordcrack_cuda.cu
+    ./passwordcrack_cuda
    
   Dr Kevan Buckley, University of Wolverhampton, 2018
 *****************************************************************************/
@@ -90,11 +90,11 @@ __device__ int is_a_match(char *attempt) {
 }
 
 __global__ void  kernel() {
-	char i1,i2,i3,i4;
+	char i1,i2,i3,i4;//variables 
 
 	char password[7];
 	password[6] = '\0';
-
+	//block id threrad id initilized
 	int i = blockIdx.x+65;
 	int j = threadIdx.x+65;
 	char firstMatch = i; 
@@ -120,7 +120,7 @@ __global__ void  kernel() {
 		}
 	}
 }
-
+//time difference
 int time_difference(struct timespec *start, 
 	struct timespec *finish, 
 	long long int *difference) {
@@ -140,7 +140,7 @@ int main() {
 	struct  timespec start, finish;
 	long long int time_elapsed;
 	clock_gettime(CLOCK_MONOTONIC, &start);
-
+	//kernal function that determine block and threads to use
 	kernel <<<26,26>>>();
 	cudaThreadSynchronize();
 

@@ -1,3 +1,12 @@
+/**
+To compile 
+mpicc -o mpipw MPIpasswordcrack.c -lcrypt
+
+To run 
+mpirun -n 3 ./mpipw
+
+**/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,7 +18,7 @@
 #include <time.h>
 
 int n_passwords = 4;
-
+//encrypted password using crypt funcion 
 char *encrypted_passwords[] = {
 
 	"$6$KB$LmvMGhIR4PnYKlPXAOo2K4zt.BEjUN/9fKPMYT1zyisqo4WxY.FKfiCGz15GAoyNV5dW3GP.uQSiIaBQ3zxgo0",
@@ -20,17 +29,13 @@ char *encrypted_passwords[] = {
 
 	"$6$KB$jM4o2O3EJI9OCoHvf8Jo0YG4JcnwEPFqpJINXb4RGEahSL5JRIQt1s2djLbGHThVv9IGzrYsS18XICkn5074./"
 };
-
-
 /**
  Required by lack of standard function in C.   
 */
-
 void substr(char *dest, char *src, int start, int length){
 	memcpy(dest, src + start, length);
 	*(dest + length) = '\0';
 }
-
 /**
  This function can crack the kind of password explained above. All
 combinations
@@ -43,7 +48,7 @@ experiments
  for this kind of program should not include this. i.e. comment out the
 printfs.
 */
-
+//frist function for Instance 1
 void function_1(char *salt_and_encrypted){
   int x, y, z;     // Loop counters
   char salt[7];    // String used in hashing the password. Need space
@@ -51,12 +56,10 @@ void function_1(char *salt_and_encrypted){
   char plain[7];   // The combination of letters currently being checked
   char *enc;       // Pointer to the encrypted password
   int count = 0;   // The number of combinations explored so far
-
   substr(salt, salt_and_encrypted, 0, 6);
-
-  for(x='A'; x<='M'; x++){
-  	for(y='A'; y<='Z'; y++){
-  		for(z=0; z<=99; z++){
+  for(x='A'; x<='M'; x++){       //loop iterating from  A to M 
+  	for(y='A'; y<='Z'; y++){       //loop iterating from  A to Z
+  		for(z=0; z<=99; z++){        //loop iterating from  0 to 99
   			printf("Instance 1");
   			sprintf(plain, "%c%c%02d", x, y, z); 
   			enc = (char *) crypt(plain, salt);
@@ -72,6 +75,8 @@ void function_1(char *salt_and_encrypted){
   printf("%d solutions explored\n", count);
 }
 
+
+//funcation 2 for second instance
 void function_2(char *salt_and_encrypted){
   int x, y, z;     // Loop counters
   char salt[7];    // String used in hashing the password. Need space
@@ -82,7 +87,7 @@ void function_2(char *salt_and_encrypted){
 
   substr(salt, salt_and_encrypted, 0, 6);
 
-  for(x='N'; x<='Z'; x++){
+  for(x='N'; x<='Z'; x++){   ///loop iterating from N to Z for second insatance
   	for(y='A'; y<='Z'; y++){
   		for(z=0; z<=99; z++){
   			printf("Instance 2");
@@ -99,7 +104,7 @@ void function_2(char *salt_and_encrypted){
   }
   printf("%d solutions explored\n", count);
 }
-
+//time difference
 int time_difference(struct timespec *start, 
 	struct timespec *finish, 
 	long long int *difference) {
@@ -120,10 +125,11 @@ int main(int argc, char *argv[]){
 
 	struct  timespec start, finish;
 	long long int time_elapsed;
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start);  ///starting time
 
 	MPI_Init(NULL, NULL);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	//determingin size of group and rank of callin process
+ 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	if(size != 3) {
 		if(rank == 0) {
@@ -134,6 +140,7 @@ int main(int argc, char *argv[]){
 			int x;
 			int y;
 			int i;
+			//sending count of element
 			MPI_Send(&x, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);  
 			MPI_Send(&y, 1, MPI_INT, 2, 0, MPI_COMM_WORLD);
 
@@ -141,6 +148,7 @@ int main(int argc, char *argv[]){
 			if(rank == 1){
 				int i;
 				int number = rank + 10;
+				//receving count of element
 				MPI_Recv(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 				for ( i = 0; i<n_passwords;i<i++){
 					function_1(encrypted_passwords[i]);
@@ -149,6 +157,7 @@ int main(int argc, char *argv[]){
 			else if(rank == 2){
 				int i;
 				int number = rank + 10;
+				//receving count of element
 				MPI_Recv(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 				for ( i = 0; i<n_passwords;i<i++){
 					function_2(encrypted_passwords[i]);
@@ -156,7 +165,7 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
-	MPI_Finalize(); 
+	MPI_Finalize(); //termenating MPI
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 	time_difference(&start, &finish, &time_elapsed);

@@ -1,3 +1,10 @@
+/**
+	To compile 
+	mpicc -o MPIimg MPIimage_processing.c -lglut -lGL -lm 
+	To run
+	mpirun -n 5 -quite ./MPIimg
+**/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glut.h>
@@ -8,23 +15,20 @@
 #include <mpi.h>
 #include <math.h>
 #include <time.h>
-
-
 #define width 100 
 #define height 72
 
 unsigned char image[], results[width * height];
-int startIndex, endIndex;
-
+int startIndex, endIndex; //variables
+//edge detect funcation 
 void detect_edges(unsigned char *in, unsigned char *out) {
 	int i;
 	int n_pixels = (width * height);
-
 	for(i=0;i<n_pixels;i++) {
     int x, y; // the pixel of interest
     int b, d, f, h; // the pixels adjacent to x,y used for the calculation
     int r; // the result of calculate
-    
+ 
     y = i / width;
     x = i - (width * y);
 
@@ -35,10 +39,8 @@ void detect_edges(unsigned char *in, unsigned char *out) {
     	d = i - 1;
     	f = i + 1;
     	h = i - width;
-
     	r = (in[i] * 4) + (in[b] * -1) + (in[d] * -1) + (in[f] * -1)
     	+ (in[h] * -1);
-
       if (r > 0) { // if the result is positive this is an edge pixel
       	out[i] = 255;
       } else {
@@ -47,16 +49,13 @@ void detect_edges(unsigned char *in, unsigned char *out) {
   }
 }
 }
-
 void tidy_and_exit() {
 	exit(0);
 }
-
 void sigint_callback(int signal_number){
 	printf("\nInterrupt from keyboard\n");
 	tidy_and_exit();
 }
-
 static void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glRasterPos4i(-1, -1, 0, 1);
@@ -65,7 +64,6 @@ static void display() {
 	glDrawPixels(width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, results);
 	glFlush();
 }
-
 static void key_pressed(unsigned char key, int x, int y) {
 	switch(key){
     case 27: // escape
@@ -76,7 +74,7 @@ static void key_pressed(unsigned char key, int x, int y) {
     break;
 }
 }
-
+//time difference
 int time_difference(struct timespec *start, 
 	struct timespec *finish, 
 	long long int *difference) {
@@ -90,8 +88,7 @@ int time_difference(struct timespec *start,
 	*difference = ds * 1000000000 + dn;
 	return !(*difference > 0);
 }
-
-
+//main fucntion 
 int main(int argc, char **argv) {
 	signal(SIGINT, sigint_callback);
 	int account = 0;
@@ -99,11 +96,11 @@ int main(int argc, char **argv) {
 
 	struct  timespec start, finish;
 	long long int time_elapsed;
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start);//time starting
 
-	MPI_Init(NULL, NULL);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Init(NULL, NULL); //initilizing MPI 
+	MPI_Comm_size(MPI_COMM_WORLD, &size);//determining size of group 
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);//determining rank of calling process
 	if(size != 5) {
 		if(rank == 0) {
 			printf("This program needs 5 processes\n");
@@ -114,20 +111,21 @@ int main(int argc, char **argv) {
 			struct  timespec start, finish;
 			long long int time_elapsed;
 			clock_gettime(CLOCK_MONOTONIC, &start);
-
+			//sending count of lelment to do its corrosponding job
 			MPI_Send(&results[0], 1800, MPI_UNSIGNED_CHAR, 1, 0, MPI_COMM_WORLD);
 			MPI_Send(&results[1800], 1800, MPI_UNSIGNED_CHAR, 2, 0, MPI_COMM_WORLD);
 			MPI_Send(&results[3600], 1800, MPI_UNSIGNED_CHAR, 3, 0, MPI_COMM_WORLD);
 			MPI_Send(&results[5400], 1800, MPI_UNSIGNED_CHAR, 4, 0, MPI_COMM_WORLD);
-
+			//reciving count of element 
 			MPI_Recv(&results[0], 1800, MPI_UNSIGNED_CHAR, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
 			MPI_Recv(&results[1800], 1800,MPI_UNSIGNED_CHAR, 2, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			MPI_Recv(&results[3600], 1800,MPI_UNSIGNED_CHAR, 3, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			MPI_Recv(&results[5400], 1800,MPI_UNSIGNED_CHAR, 4, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 
-			clock_gettime(CLOCK_MONOTONIC, &finish);
+			clock_gettime(CLOCK_MONOTONIC, &finish); //stopping time
 			time_difference(&start, &finish, &time_elapsed);
+			//printing time elapsed
 			printf("Time elapsed was %lldns or %0.9lfs\n", time_elapsed,
 				(time_elapsed/1.0e9)); 
 
@@ -144,7 +142,7 @@ int main(int argc, char **argv) {
 
 		} else {
 			if(rank == 1){
-
+				//calling edge function frist instance
 				startIndex = 0;
 				endIndex = 1799;
 				MPI_Recv(&results[0], 1800, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
@@ -159,7 +157,7 @@ int main(int argc, char **argv) {
 			else if(rank == 2){
 				startIndex = 1800;
 				endIndex = 3599;
-
+				//calling edge function on second instance determined byt rank
 				MPI_Recv(&results[1800], 1800, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
 				detect_edges(image, results);
 				MPI_Send(&results[1800], 1800, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
@@ -171,11 +169,10 @@ int main(int argc, char **argv) {
 			else if(rank == 3){
 				startIndex = 3600;
 				endIndex = 5399;
-
+				//calling edge function on third instance
 				MPI_Recv(&results[3600], 1800, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
 				detect_edges(image, results);
 				MPI_Send(&results[3600], 1800, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-
 				// clock_gettime(CLOCK_MONOTONIC, &finish);
 				// time_difference(&start, &finish, &time_elapsed);
 				// printf("Time elapsed was %lldns or %0.9lfs\n", time_elapsed,
@@ -185,11 +182,10 @@ int main(int argc, char **argv) {
 			else if(rank == 4){
 				startIndex = 5400;
 				endIndex = 7199;
-
+				//calling edge function on fouth instance
 				MPI_Recv(&results[5400], 1800, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
 				detect_edges(image, results);
 				MPI_Send(&results[5400], 1800, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-
 				// clock_gettime(CLOCK_MONOTONIC, &finish);
 				// time_difference(&start, &finish, &time_elapsed);
 				// printf("Time elapsed was %lldns or %0.9lfs\n", time_elapsed,
@@ -198,7 +194,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	MPI_Finalize(); 
+	MPI_Finalize(); //closing MPI
 
 	// clock_gettime(CLOCK_MONOTONIC, &finish);
 	// time_difference(&start, &finish, &time_elapsed);
@@ -206,7 +202,7 @@ int main(int argc, char **argv) {
 	// 	(time_elapsed/1.0e9)); 
 	return 0;
 }
-
+//dataset of image
 unsigned char image[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

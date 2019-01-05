@@ -22,7 +22,8 @@
       the pixel data type.
     
   To compile adapt the code below wo match your filenames:  
-    cc -o ip_coursework ip_coursework.c -lglut -lGL -lm 
+    cc -o cuda_img cuda_image_processing.c -lglut -lGL -lm 
+    ./cuda_img
    
   Dr Kevan Buckley, University of Wolverhampton, 2018
 ******************************************************************************/
@@ -31,7 +32,7 @@
 
 
 unsigned char results[width * height];
-
+//dataset
 unsigned char image[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -412,17 +413,16 @@ unsigned char image[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
+
 //global function detect_edges
 __global__ void detect_edges(unsigned char *input, unsigned char *output) {
-
 	int i = (blockIdx.x * 72) + threadIdx.x;
     int x, y; // the pixel of interest
     int b, d, f, h; // the pixels adjacent to x,y used for the calculation
     int r; // the result of calculate
-    
+
     y = i / width;;
     x = i - (width * y);
-
     if (x == 0 || y == 0 || x == width - 1 || y == height - 1) {
     	output[i] = 0;
 
@@ -442,16 +442,13 @@ __global__ void detect_edges(unsigned char *input, unsigned char *output) {
     	}
     }
 }
-
 void tidy_and_exit() {
 	exit(0);
 }
-
 void sigint_callback(int signal_number){
 	printf("\nInterrupt from keyboard\n");
 	tidy_and_exit();
 }
-
 static void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glRasterPos4i(-1, -1, 0, 1);
@@ -460,7 +457,6 @@ static void display() {
 	glDrawPixels(width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, results);
 	glFlush();
 }
-
 static void key_pressed(unsigned char key, int x, int y) {
 	switch(key){
     case 27: // escape
@@ -471,7 +467,7 @@ static void key_pressed(unsigned char key, int x, int y) {
     break;
 }
 }
-
+//time differnce
 int time_difference(struct timespec *start, struct timespec *finish,
 	long long int *difference) {
 	long long int ds =  finish->tv_sec - start->tv_sec; 
@@ -484,15 +480,15 @@ int time_difference(struct timespec *start, struct timespec *finish,
 	*difference = ds * 1000000000 + dn;
 	return !(*difference > 0);
 }
-
+//main function
 
 int main(int argc, char **argv) {
 	unsigned char *d_results;
 	unsigned char *d_image;
-	
+	//allocating bytes of linear memorry in device 
 	cudaMalloc((void**)&d_image, sizeof(unsigned char) * (width * height));
 	cudaMalloc((void**)&d_results, sizeof(unsigned char) * (width * height));
-	cudaMemcpy(d_image, &image, sizeof(unsigned char) * (width * height), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_image, &image, sizeof(unsigned char) * (width * height), cudaMemcpyHostToDevice);//copy bytes form the momory area from host to device
 
 	signal(SIGINT, sigint_callback);
 	struct timespec start, finish;   
@@ -501,7 +497,7 @@ int main(int argc, char **argv) {
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	detect_edges<<<100,72>>>(d_image, d_results);
 
-	cudaThreadSynchronize();
+	cudaThreadSynchronize(); // blocks until device complets all associative tasks
 
 	cudaMemcpy(&results, d_results, sizeof(unsigned char) * (width * height), cudaMemcpyDeviceToHost);
 	clock_gettime(CLOCK_MONOTONIC, &finish);
@@ -510,6 +506,7 @@ int main(int argc, char **argv) {
 	printf("Time elapsed was %lldns or %0.9lfs\n", time_elapsed,
 		(time_elapsed/1.0e9)); 
 
+    //frees memroy space used by pointer 
 	cudaFree(&d_image);
 	cudaFree(&d_results);
 
