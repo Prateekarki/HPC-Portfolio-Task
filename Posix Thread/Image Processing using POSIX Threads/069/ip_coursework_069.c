@@ -67,7 +67,7 @@ void tidy_and_exit() {
 }
 
 void sigint_callback(int signal_number){
-  printf("\nInterrupt from keyboard\n");
+  //printf("\nInterrupt from keyboard\n");
   tidy_and_exit();
 }
 
@@ -86,7 +86,7 @@ static void key_pressed(unsigned char key, int x, int y) {
       tidy_and_exit();
       break;
     default: 
-      printf("\nPress escape to exit\n");
+     // printf("\nPress escape to exit\n");
       break;
   }
 }
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
   signal(SIGINT, sigint_callback);
   
 
-  printf("image dimensions %dx%d\n", width, height);
+  //printf("image dimensions %dx%d\n", width, height);
   detect_edges(image, results);
 
   clock_gettime(CLOCK_MONOTONIC, &finish);

@@ -489,13 +489,12 @@ int time_difference(struct timespec *start, struct timespec *finish,
 int main(int argc, char **argv) {
 	unsigned char *d_results;
 	unsigned char *d_image;
-
+	
 	cudaMalloc((void**)&d_image, sizeof(unsigned char) * (width * height));
 	cudaMalloc((void**)&d_results, sizeof(unsigned char) * (width * height));
 	cudaMemcpy(d_image, &image, sizeof(unsigned char) * (width * height), cudaMemcpyHostToDevice);
 
 	signal(SIGINT, sigint_callback);
-
 	struct timespec start, finish;   
 	long long int time_elapsed;
 

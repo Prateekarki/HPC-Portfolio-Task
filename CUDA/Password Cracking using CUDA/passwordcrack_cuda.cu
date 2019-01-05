@@ -45,7 +45,7 @@ __device__ int is_a_match(char *attempt) {
 	while(*a == *p1) { 
 		if(*a == '\0') 
 		{
-			printf("Password Match: %s\n",plain_password1);
+			printf("Password: %s\n",plain_password1);
 			break;
 		}
 
@@ -56,7 +56,7 @@ __device__ int is_a_match(char *attempt) {
 	while(*b == *p2) { 
 		if(*b == '\0') 
 		{
-			printf("Password Match: %s\n",plain_password2);
+			printf("Password: %s\n",plain_password2);
 			break;
 		}
 
@@ -67,7 +67,7 @@ __device__ int is_a_match(char *attempt) {
 	while(*c == *p3) { 
 		if(*c == '\0') 
 		{
-			printf("Password Match: %s\n",plain_password3);
+			printf("Password: %s\n",plain_password3);
 			break;
 		}
 
@@ -78,7 +78,7 @@ __device__ int is_a_match(char *attempt) {
 	while(*d == *p4) { 
 		if(*d == '\0') 
 		{
-			printf("Password Match: %s\n",plain_password4);
+			printf("Password: %s\n",plain_password4);
 			return 1;
 		}
 
@@ -89,15 +89,8 @@ __device__ int is_a_match(char *attempt) {
 
 }
 
-
-/****************************************************************************
-  The kernel function assume that there will be only one thread and uses 
-  nested loops to generate all possible passwords and test whether they match
-  the hidden password.
-*****************************************************************************/
-
 __global__ void  kernel() {
-	char k,l,m,n;
+	char i1,i2,i3,i4;
 
 	char password[7];
 	password[6] = '\0';
@@ -109,14 +102,14 @@ __global__ void  kernel() {
 
 	password[0] = firstMatch;
 	password[1] = secondMatch;
-	for(k='0'; k<='9'; k++){
-		for(l='0'; l<='9'; l++){
-			for(m='0'; m<='9'; m++){
-				for(n='0'; n<='9'; n++){
-					password[2] = k;
-					password[3] = l;
-					password[4] = m;
-					password[5] = n; 
+	for(i1='0'; i1<='9'; i1++){
+		for(i2='0'; i2<='9'; i2++){
+			for(i3='0'; i3<='9'; i3++){
+				for(i4='0'; i4<='9'; i4++){
+					password[2] = i1;
+					password[3] = i2;
+					password[4] = i3;
+					password[5] = i4; 
 					if(is_a_match(password)) {
 					} 
 					else {
