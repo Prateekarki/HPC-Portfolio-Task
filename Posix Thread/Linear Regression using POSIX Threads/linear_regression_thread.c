@@ -12,10 +12,10 @@
  * a gradient search for a minimum in mc-space.
  * 
  * To compile:
- *   cc -o lr_coursework lr_coursework.c -lm
+ *  gcc -o linear_regression_thread  linear_regression_thread.c -lm -pthread
  * 
  * To run:
- *   ./lr_coursework
+ *   ./linear_regression_thread
  * 
  * Dr Kevan Buckley, University of Wolverhampton, 2018
  *****************************************************************************/
@@ -43,7 +43,7 @@
  	double e = (m * x) + c - y;
  	return e * e;
  }
-
+//error calcualtion funcation 
  double rms_error(double m, double c) {
  	int i;
  	double mean;
@@ -54,6 +54,7 @@
  	mean = error_sum / n_data;
  	return sqrt(mean);
  }
+//thread function 1
  void *thread_function(void *args){
  	int *a = args;
  	int i = *a;
@@ -84,6 +85,7 @@
 
  int main() {
  	int i;
+	//thread variable
  	pthread_t threads[8];
  	be = rms_error(bm, bc);
 
@@ -96,7 +98,6 @@
  			pthread_create(&threads[i], NULL, thread_function, &i);
  			pthread_join(threads[i], NULL);
  		}
-
  		printf("best m,c is %lf,%lf with error %lf in direction %d\n", 
  			dm[best_error_i], dc[best_error_i], best_error, best_error_i);
  		if(best_error < be) {

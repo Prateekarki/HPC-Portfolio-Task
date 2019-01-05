@@ -10,19 +10,17 @@
  * a gradient search for a minimum in mc-space.
  * 
  * To compile:
- *   cc -o lr_coursework lr_coursework.c -lm
+ *   gcc -o linear_regression_69  linear_regression_69.c -lm
  * 
  * To run:
- *   ./lr_coursework
+ *   ./linear_regression_69
  * 
  * Dr Kevan Buckley, University of Wolverhampton, 2018
  *****************************************************************************/
-
 typedef struct point_t {
 	double x;
 	double y;
 } point_t;
-
 int n_data = 1000;
 point_t data[];
 
@@ -30,27 +28,23 @@ double residual_error(double x, double y, double m, double c) {
 	double e = (m * x) + c - y;
 	return e * e;
 }
-
+//function to calculate error
 double rms_error(double m, double c) {
 	int i;
 	double mean;
 	double error_sum = 0;
-
 	for(i=0; i<n_data; i++) {
 		error_sum += residual_error(data[i].x, data[i].y, m, c);  
 	}
-
 	mean = error_sum / n_data;
-
 	return sqrt(mean);
 }
-
+//time differnce function
 int time_difference(struct timespec *start, 
 	struct timespec *finish, 
 	long long int *difference) {
 	long long int ds =  finish->tv_sec - start->tv_sec; 
 	long long int dn =  finish->tv_nsec - start->tv_nsec; 
-
 	if(dn < 0 ) {
 		ds--;
 		dn += 1000000000; 
@@ -58,8 +52,6 @@ int time_difference(struct timespec *start,
 	*difference = ds * 1000000000 + dn;
 	return !(*difference > 0);
 }
-
-
 int main() {
 	int i;
 	double bm = 1.3;
@@ -72,7 +64,6 @@ int main() {
 	double best_error = 999999999;
 	int best_error_i;
 	int minimum_found = 0;
-
 	double om[] = {0,1,1, 1, 0,-1,-1,-1};
 	double oc[] = {1,1,0,-1,-1,-1, 0, 1};
 
@@ -82,13 +73,11 @@ int main() {
 	long long int time_elapsed;
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
-
 	while(!minimum_found) {
 		for(i=0;i<8;i++) {
 			dm[i] = bm + (om[i] * step);
 			dc[i] = bc + (oc[i] * step);    
 		}
-
 		for(i=0;i<8;i++) {
 			e[i] = rms_error(dm[i], dc[i]);
 			if(e[i] < best_error) {
@@ -96,7 +85,6 @@ int main() {
 				best_error_i = i;
 			}
 		}
-
 		printf("best m,c is %lf,%lf with error %lf in direction %d\n", 
 			dm[best_error_i], dc[best_error_i], best_error, best_error_i);
 		if(best_error < be) {
@@ -107,16 +95,13 @@ int main() {
 			minimum_found = 1;
 		}
 	}
-
 	printf("minimum m,c is %lf,%lf with error %lf\n", bm, bc, be);
-
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 	time_difference(&start, &finish, &time_elapsed);
 	printf("Time elapsed was %lldns or %0.9lfs\n", time_elapsed,
 		(time_elapsed/1.0e9)); 
 	return 0;
 }
-
 point_t data[] = {
 	{82.73,128.67},{79.53,133.54},{66.86,124.65},{69.21,135.74},
 	{82.20,122.07},{84.32,120.46},{71.12,93.14},{85.64,121.42},
